@@ -11,7 +11,7 @@ contract Exchange is ERC20 {
     address public tokenAddress;
     address public registryAddress;
 
-    constructor(address _token) ERC20("Proud Scammer", "LP") {
+    constructor(address _token) ERC20("La Paternal", "LP") {
         require(_token != address(0), "invalid token address");
         tokenAddress = _token;
         registryAddress = msg.sender;
