@@ -3,6 +3,10 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+interface IRegistry {
+    function getExchange(address _tokenAddress) external returns (address);
+}
+
 contract Exchange is ERC20 {
     address public tokenAddress;
     address public registryAddress;
@@ -159,8 +163,4 @@ contract Exchange is ERC20 {
             msg.sender
         );
     }
-}
-
-interface IRegistry {
-    function getExchange(address _tokenAddress) external returns (address);
 }
