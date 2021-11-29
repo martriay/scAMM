@@ -2,6 +2,12 @@
 
 Prueba de concepto de AMM para el curso de [Introducción al desarrollo DeFi](https://intro-defi.marto.lol/), continuación del curso de [Introducción al desarollo en Ethereum](https://intro-ethereum.marto.lol/). Contratos inspirados en [Uniswap v1](https://github.com/Uniswap/v1-contracts).
 
+
+> ## ⚠️ KWIDADO! ⚠️
+> Este repo contiene código sin testear, sin auditar, y no siempre que lo laburé estaba sobrio.
+> Puede contener errores groseros, errores de concepto y de implementación.
+> **Ni se te ocurra usarlo en producción.**
+
 ![uwu](uwu.png)
 ## Contratos
 - [Exchange](contracts/Exchange.sol)
