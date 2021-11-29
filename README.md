@@ -4,7 +4,7 @@ Prueba de concepto de AMM para el curso de [Introducción al desarrollo DeFi](ht
 
 
 > ## ⚠️ KWIDADO! ⚠️
-> Este repo contiene código sin testear, sin auditar, y no siempre que lo laburé estaba sobrio.
+> Este repo contiene código sin testear, sin auditar, y no siempre que lo laburé estuve sobrio.
 > Puede contener errores groseros, errores de concepto y de implementación.
 > **Ni se te ocurra usarlo en producción.**
 
