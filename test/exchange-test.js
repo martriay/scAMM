@@ -8,8 +8,13 @@ const amountB = ethers.utils.parseEther("1000");
 let token;
 let exchange;
 
+let tx;
+
+let deployer, bob, alice;
+
 describe("Exchange", function () {
   beforeEach(async function () {
+    [deployer, bob, alice] = await ethers.getSigners();
     const Token = await ethers.getContractFactory("Token");
     token = await Token.deploy("Ferneth", "FTH", totalSupply);
     await token.deployed();
@@ -20,7 +25,9 @@ describe("Exchange", function () {
 
   it("add liquidity", async function () {
     await token.approve(exchange.address, amountA);
-    await exchange.addLiquidity(amountA, { value: amountB });
+    tx = exchange.addLiquidity(amountA, { value: amountB });
+    await expect(tx).to.emit(exchange, "AddLiquidity")
+      .withArgs(deployer.address, amountB, amountA);
 
     expect(await provider.getBalance(exchange.address)).to.equal(amountB);
     expect(await exchange.getReserve()).to.equal(amountA);
@@ -42,15 +49,26 @@ describe("Exchange", function () {
 
   it("returns correct eth price", async () => {
     await token.approve(exchange.address, amountA);
-    await exchange.addLiquidity(amountA, { value: amountB });
+    tx = exchange.addLiquidity(amountA, { value: amountB });
+    await expect(tx).to.emit(exchange, "AddLiquidity")
+      .withArgs(deployer.address, amountB, amountA);
 
+
+    // let amount = ethers.utils.parseEther("2");
     let bar = await exchange.getEthAmount(ethers.utils.parseEther("2"));
-    expect(ethers.utils.formatEther(bar)).to.eq("0.999000999000999");
 
+    // let inputAmountWithFee = amount.mul(99);
+    // let numerator = inputAmountWithFee.mul(amountB);
+    // let denominator = amountA.mul(100).add(inputAmountWithFee);
+    // let expected = numerator.div(denominator);
+    // console.log(ethers.utils.formatEther(expected));
+
+    expect(ethers.utils.formatEther(bar)).to.eq("0.989020869339354039");
+    
     bar = await exchange.getEthAmount(ethers.utils.parseEther("100"));
-    expect(ethers.utils.formatEther(bar)).to.eq("47.619047619047619047");
+    expect(ethers.utils.formatEther(bar)).to.eq("47.16531681753215817");
 
     bar = await exchange.getEthAmount(ethers.utils.parseEther("2000"));
-    expect(ethers.utils.formatEther(bar)).to.eq("500.0");
+    expect(ethers.utils.formatEther(bar)).to.eq("497.487437185929648241");
   });
 });
