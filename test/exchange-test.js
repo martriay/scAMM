@@ -47,6 +47,23 @@ describe("Exchange", function () {
     // expect(ethers.utils.formatEther(bar)).to.eq("1000.0");
   });
 
+  it("should remove liquidity", async () => {
+    token.transfer(bob.address, totalSupply);
+    token.connect(bob).approve(exchange.address, totalSupply);
+    tx = exchange.connect(bob).addLiquidity(amountA, { value: amountB });
+    await expect(tx).to.emit(exchange, "AddLiquidity")
+      .withArgs(bob.address, amountB, amountA);
+    
+    expect(await provider.getBalance(exchange.address)).to.equal(amountB);
+    expect(await exchange.getReserve()).to.equal(amountA);
+
+    const lpTokenAmount = await exchange.balanceOf(bob.address);
+
+    tx = exchange.connect(bob).removeLiquidity(lpTokenAmount);
+    await expect(tx).to.emit(exchange, "RemoveLiquidity")
+      .withArgs(bob.address, amountB, amountA);
+  });
+
   it("returns correct eth price", async () => {
     await token.approve(exchange.address, amountA);
     tx = exchange.addLiquidity(amountA, { value: amountB });
