@@ -88,4 +88,26 @@ describe("Exchange", function () {
     bar = await exchange.getEthAmount(ethers.utils.parseEther("2000"));
     expect(ethers.utils.formatEther(bar)).to.eq("497.487437185929648241");
   });
+
+  it("swap eth into token", async () => {
+    await token.approve(exchange.address, amountA);
+    tx = exchange.addLiquidity(amountA, { value: amountB });
+    await expect(tx).to.emit(exchange, "AddLiquidity")
+      .withArgs(deployer.address, amountB, amountA);
+
+    const expectedOutputForBob = await exchange.getEthAmount(ethers.utils.parseEther("2"));
+    tx = await exchange.connect(bob).ethToTokenSwap(expectedOutputForBob, { value: ethers.utils.parseEther("2") });
+
+    await expect(tx).to.emit(exchange, "TokenPurchase");
+  
+    // revisar estos valores
+    // expect(await token.balanceOf(bob.address)).to.eq(expectedOutputForBob)
+    
+    const expectedOutputForAlice = await exchange.getEthAmount(ethers.utils.parseEther("2"));
+    tx = await exchange.connect(alice).ethToTokenSwap(expectedOutputForAlice, { value: ethers.utils.parseEther("2") });
+
+    await expect(tx).to.emit(exchange, "TokenPurchase");
+    // // revisar estos valores
+    // expect(await token.balanceOf(alice.address)).to.eq(expectedOutputForAlice);
+  });
 });
