@@ -11,6 +11,11 @@ contract Exchange is ERC20 {
     address public tokenAddress;
     address public registryAddress;
 
+    event TokenPurchase(address indexed buyer, uint256 indexed eth_sold, uint256 indexed tokens_bought);
+    event EthPurchase(address indexed buyer, uint256 indexed tokens_sold, uint256 indexed eth_bought);
+    event AddLiquidity(address indexed provider, uint256 indexed eth_amount, uint256 indexed token_amount);
+    event RemoveLiquidity(address indexed provider, uint256 indexed eth_amount, uint256 indexed token_amount);
+
     constructor(address _token) ERC20("La Paternal", "LP") {
         require(_token != address(0), "invalid token address");
         tokenAddress = _token;
@@ -39,6 +44,9 @@ contract Exchange is ERC20 {
         IERC20 token = IERC20(tokenAddress);
         token.transferFrom(msg.sender, address(this), _tokenAmount);
         _mint(msg.sender, liquidity);
+
+        emit AddLiquidity(msg.sender, msg.value, _tokenAmount);
+
         return liquidity;
     }
 
@@ -55,6 +63,8 @@ contract Exchange is ERC20 {
         _burn(msg.sender, _amount);
         payable(msg.sender).transfer(ethAmount);
         IERC20(tokenAddress).transfer(msg.sender, tokenAmount);
+
+        emit RemoveLiquidity(msg.sender, ethAmount, tokenAmount);
 
         return (ethAmount, tokenAmount);
     }
@@ -100,6 +110,8 @@ contract Exchange is ERC20 {
 
         require(tokensBought >= _minTokens, "insufficient output amount");
         IERC20(tokenAddress).transfer(recipient, tokensBought);
+
+        emit EthPurchase(msg.sender, msg.value, tokensBought);
     }
 
     function ethToTokenSwap(uint256 _minTokens) public payable {
@@ -129,6 +141,8 @@ contract Exchange is ERC20 {
             _tokensSold
         );
         payable(msg.sender).transfer(ethBought);
+
+        emit TokenPurchase(msg.sender, ethBought, _tokensSold);
     }
 
     function tokenToTokenSwap(

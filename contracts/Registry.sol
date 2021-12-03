@@ -5,6 +5,8 @@ import "./Exchange.sol";
 contract Registry {
     mapping(address => address) public tokenToExchange;
 
+    event NewExchange(address indexed token, address indexed exchange);
+
     function createExchange(address _tokenAddress) public returns (address) {
         require(_tokenAddress != address(0), "invalid token address");
         require(
@@ -14,6 +16,8 @@ contract Registry {
 
         Exchange exchange = new Exchange(_tokenAddress);
         tokenToExchange[_tokenAddress] = address(exchange);
+
+        emit NewExchange(_tokenAddress, address(exchange));
 
         return address(exchange);
     }
