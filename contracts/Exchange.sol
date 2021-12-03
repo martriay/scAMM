@@ -112,7 +112,7 @@ contract Exchange is ERC20 {
         require(tokensBought >= _minTokens, "insufficient output amount");
         IERC20(tokenAddress).transfer(recipient, tokensBought);
 
-        emit EthPurchase(msg.sender, msg.value, tokensBought);
+        emit TokenPurchase(msg.sender, msg.value, tokensBought);
     }
 
     function ethToTokenSwap(uint256 _minTokens) public payable {
@@ -143,7 +143,7 @@ contract Exchange is ERC20 {
         );
         payable(msg.sender).transfer(ethBought);
 
-        emit TokenPurchase(msg.sender, ethBought, _tokensSold);
+        emit EthPurchase(msg.sender, ethBought, _tokensSold);
     }
 
     function tokenToTokenSwap(
