@@ -12,10 +12,10 @@ contract Exchange is ERC20 {
     address public tokenAddress;
     address public registryAddress;
 
-    event TokenPurchase(address indexed buyer, uint256 indexed eth_sold, uint256 indexed tokens_bought);
-    event EthPurchase(address indexed buyer, uint256 indexed tokens_sold, uint256 indexed eth_bought);
-    event AddLiquidity(address indexed provider, uint256 indexed eth_amount, uint256 indexed token_amount);
-    event RemoveLiquidity(address indexed provider, uint256 indexed eth_amount, uint256 indexed token_amount);
+    event TokenPurchase(address indexed buyer, uint256 indexed ethSold, uint256 indexed tokensBought);
+    event EthPurchase(address indexed buyer, uint256 indexed tokensSold, uint256 indexed ethBought);
+    event AddLiquidity(address indexed provider, uint256 indexed ethAmount, uint256 indexed tokenAmount);
+    event RemoveLiquidity(address indexed provider, uint256 indexed ethAmount, uint256 indexed tokenAmount);
 
     constructor(address _token) ERC20("La Paternal", "LP") {
         require(_token != address(0), "invalid token address");
