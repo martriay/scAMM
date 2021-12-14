@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -10,6 +11,11 @@ interface IRegistry {
 contract Exchange is ERC20 {
     address public tokenAddress;
     address public registryAddress;
+
+    event TokenPurchase(address indexed buyer, uint256 indexed ethSold, uint256 indexed tokensBought);
+    event EthPurchase(address indexed buyer, uint256 indexed tokensSold, uint256 indexed ethBought);
+    event AddLiquidity(address indexed provider, uint256 indexed ethAmount, uint256 indexed tokenAmount);
+    event RemoveLiquidity(address indexed provider, uint256 indexed ethAmount, uint256 indexed tokenAmount);
 
     constructor(address _token) ERC20("La Paternal", "LP") {
         require(_token != address(0), "invalid token address");
@@ -39,6 +45,9 @@ contract Exchange is ERC20 {
         IERC20 token = IERC20(tokenAddress);
         token.transferFrom(msg.sender, address(this), _tokenAmount);
         _mint(msg.sender, liquidity);
+
+        emit AddLiquidity(msg.sender, msg.value, _tokenAmount);
+
         return liquidity;
     }
 
@@ -55,6 +64,8 @@ contract Exchange is ERC20 {
         _burn(msg.sender, _amount);
         payable(msg.sender).transfer(ethAmount);
         IERC20(tokenAddress).transfer(msg.sender, tokenAmount);
+
+        emit RemoveLiquidity(msg.sender, ethAmount, tokenAmount);
 
         return (ethAmount, tokenAmount);
     }
@@ -100,6 +111,8 @@ contract Exchange is ERC20 {
 
         require(tokensBought >= _minTokens, "insufficient output amount");
         IERC20(tokenAddress).transfer(recipient, tokensBought);
+
+        emit TokenPurchase(msg.sender, msg.value, tokensBought);
     }
 
     function ethToTokenSwap(uint256 _minTokens) public payable {
@@ -129,6 +142,8 @@ contract Exchange is ERC20 {
             _tokensSold
         );
         payable(msg.sender).transfer(ethBought);
+
+        emit EthPurchase(msg.sender, ethBought, _tokensSold);
     }
 
     function tokenToTokenSwap(
