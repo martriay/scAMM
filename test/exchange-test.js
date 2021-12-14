@@ -110,4 +110,28 @@ describe("Exchange", function () {
     // // revisar estos valores
     // expect(await token.balanceOf(alice.address)).to.eq(expectedOutputForAlice);
   });
+
+  describe("flashLoan", function () {
+    let borrower;
+
+    beforeEach(async function () {
+      await token.approve(exchange.address, amountA);
+      tx = exchange.addLiquidity(amountA, { value: amountB });
+
+      const TestFlashBorrower = await ethers.getContractFactory("TestFlashBorrower");
+      borrower = await TestFlashBorrower.deploy(token.address);
+
+      await token.transfer(borrower.address, amountA);
+      await deployer.sendTransaction({to: borrower.address, value: amountB});
+    });
+
+    it("flash loan eth", async () => {
+      tx = await exchange.flashLoan(
+        borrower.address,
+        ethers.constants.AddressZero,
+        ethers.utils.parseEther("2"),
+        ethers.constants.HashZero
+      );
+    });
+  });
 });
