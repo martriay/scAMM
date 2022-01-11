@@ -15,7 +15,6 @@ let deployer, bob, alice;
 
 let tx;
 
-let deployer, bob, alice;
 
 describe("Exchange", function () {
   beforeEach(async function () {
