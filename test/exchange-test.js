@@ -13,6 +13,10 @@ let rewards;
 
 let deployer, bob, alice;
 
+let tx;
+
+let deployer, bob, alice;
+
 describe("Exchange", function () {
   beforeEach(async function () {
     [deployer, bob, alice] = await ethers.getSigners();
@@ -40,7 +44,9 @@ describe("Exchange", function () {
 
   it("add liquidity", async function () {
     await token.approve(exchange.address, amountA);
-    await exchange.addLiquidity(amountA, { value: amountB });
+    tx = exchange.addLiquidity(amountA, { value: amountB });
+    await expect(tx).to.emit(exchange, "AddLiquidity")
+      .withArgs(deployer.address, amountB, amountA);
 
     expect(await exchange.balanceOf(deployer.address)).to.equal(ethers.utils.parseUnits("1000"));
     expect(await provider.getBalance(exchange.address)).to.equal(amountB);
@@ -105,21 +111,69 @@ describe("Exchange", function () {
     // expect(ethers.utils.formatEther(bar)).to.eq("1000.0");
   });
 
+  it("should remove liquidity", async () => {
+    token.transfer(bob.address, totalSupply);
+    token.connect(bob).approve(exchange.address, totalSupply);
+    tx = exchange.connect(bob).addLiquidity(amountA, { value: amountB });
+    await expect(tx).to.emit(exchange, "AddLiquidity")
+      .withArgs(bob.address, amountB, amountA);
+    
+    expect(await provider.getBalance(exchange.address)).to.equal(amountB);
+    expect(await exchange.getReserve()).to.equal(amountA);
+
+    const lpTokenAmount = await exchange.balanceOf(bob.address);
+
+    tx = exchange.connect(bob).removeLiquidity(lpTokenAmount);
+    await expect(tx).to.emit(exchange, "RemoveLiquidity")
+      .withArgs(bob.address, amountB, amountA);
+  });
+
   it("returns correct eth price", async () => {
     await token.approve(exchange.address, amountA);
-    await exchange.addLiquidity(amountA, { value: amountB });
+    tx = exchange.addLiquidity(amountA, { value: amountB });
+    await expect(tx).to.emit(exchange, "AddLiquidity")
+      .withArgs(deployer.address, amountB, amountA);
 
-    //await network.provider.send("evm_increaseTime", [3600])
-    //await network.provider.send("evm_mine")
 
+    // let amount = ethers.utils.parseEther("2");
     let bar = await exchange.getEthAmount(ethers.utils.parseEther("2"));
 
-    expect(ethers.utils.formatEther(bar)).to.eq("0.989020869339354039");
+    // let inputAmountWithFee = amount.mul(99);
+    // let numerator = inputAmountWithFee.mul(amountB);
+    // let denominator = amountA.mul(100).add(inputAmountWithFee);
+    // let expected = numerator.div(denominator);
+    // console.log(ethers.utils.formatEther(expected));
 
+    expect(ethers.utils.formatEther(bar)).to.eq("0.989020869339354039");
+    
     bar = await exchange.getEthAmount(ethers.utils.parseEther("100"));
     expect(ethers.utils.formatEther(bar)).to.eq("47.16531681753215817");
 
     bar = await exchange.getEthAmount(ethers.utils.parseEther("2000"));
     expect(ethers.utils.formatEther(bar)).to.eq("497.487437185929648241");
+
+  });
+
+  it("swap eth into token", async () => {
+    await token.approve(exchange.address, amountA);
+    tx = exchange.addLiquidity(amountA, { value: amountB });
+    await expect(tx).to.emit(exchange, "AddLiquidity")
+      .withArgs(deployer.address, amountB, amountA);
+
+    const expectedOutputForBob = await exchange.getEthAmount(ethers.utils.parseEther("2"));
+    tx = await exchange.connect(bob).ethToTokenSwap(expectedOutputForBob, { value: ethers.utils.parseEther("2") });
+
+    await expect(tx).to.emit(exchange, "TokenPurchase");
+  
+    // revisar estos valores
+    // expect(await token.balanceOf(bob.address)).to.eq(expectedOutputForBob)
+    
+    const expectedOutputForAlice = await exchange.getEthAmount(ethers.utils.parseEther("2"));
+    tx = await exchange.connect(alice).ethToTokenSwap(expectedOutputForAlice, { value: ethers.utils.parseEther("2") });
+
+    await expect(tx).to.emit(exchange, "TokenPurchase");
+    // // revisar estos valores
+    // expect(await token.balanceOf(alice.address)).to.eq(expectedOutputForAlice);
+
   });
 });
