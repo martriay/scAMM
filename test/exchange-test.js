@@ -34,7 +34,8 @@ describe("Exchange", function () {
     // Manda todos los rewardsToken al contrato de rewards
     const deployerRewardsTokens = await rewardsToken.balanceOf(deployer.address)
     await rewardsToken.approve(rewards.address, deployerRewardsTokens)
-    await rewards.depositStakingTokens(deployerRewardsTokens)
+    await rewards.depositRewardsTokens(deployerRewardsTokens)
+
   });
 
   it("add liquidity", async function () {
@@ -54,7 +55,6 @@ describe("Exchange", function () {
     expect(await rewardsToken.balanceOf(rewards.address)).to.equal(ethers.utils.parseUnits("10000"));
 
   });
-
 
   it("Stake exchange tokens (LP) y recibir rewards", async () => {
     await token.approve(exchange.address, amountA);
@@ -78,16 +78,16 @@ describe("Exchange", function () {
     console.log(`    STAKING REWARDS (${numberOfBlocks} bloques):\n    > rewardsPerToken: ${parseInt(await rewards.rewardPerToken())}\n    > earned: ${parseInt(await rewards.earned(deployer.address))}`)
 
 
-    expect(parseInt(await rewards.rewardPerToken())).to.greaterThan(0);
-    expect(parseInt(await rewards.earned(deployer.address))).greaterThan(0);
+    expect(parseInt(await rewards.rewardPerToken())).to.equal(120);
+    expect(parseInt(await rewards.earned(deployer.address))).equal(120000);
 
     await rewards.withdraw(tokens_to_be_staked)
     expect(await exchange.balanceOf(rewards.address)).to.equal(0);
-    expect(parseInt(await rewards.rewardPerToken())).to.equal(0);
 
+    await rewards.getReward() 
+    expect(await rewardsToken.balanceOf(deployer.address)).to.equal(120000);
 
-    //await rewards.getReward() //Error: (Arithmetic operation underflowed or overflowed outside of an unchecked block)
-
+    // by Kayaba_Attribution 
 
   });
 
