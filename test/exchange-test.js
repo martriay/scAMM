@@ -1,7 +1,6 @@
 const { expect } = require("chai");
 const { ethers, waffle } = require("hardhat");
-
-const { provider } = waffle;
+ 
 const totalSupply = ethers.utils.parseEther("10000");
 const amountA = ethers.utils.parseEther("2000");
 const amountB = ethers.utils.parseEther("1000");
