@@ -1,20 +1,18 @@
 const { expect } = require("chai");
 const { ethers, waffle } = require("hardhat");
 
-const { provider } = waffle;
-const totalSupply = ethers.utils.parseEther("10000");
-const amountA = ethers.utils.parseEther("2000");
-const amountB = ethers.utils.parseEther("1000");
 let token;
 let exchange;
 
 let tx;
 
-let deployer, bob, alice;
+let deployer, bob;
 
 describe("Liquidity", function () {
-  before(async function () {
-    [deployer, bob, alice] = await ethers.getSigners();
+  beforeEach(async function () {
+    const totalSupply = ethers.utils.parseEther("10000");
+
+    [deployer, bob] = await ethers.getSigners();
     const Token = await ethers.getContractFactory("Token");
     token = await Token.deploy("Ferneth", "FTH", totalSupply);
     await token.deployed();
@@ -28,44 +26,59 @@ describe("Liquidity", function () {
    * Como es la primera vez que se agrega liquidez, el
    * valor del LP minteado es amountB
    */
-  it("add liquidity", async function () {
-    await token.approve(exchange.address, amountA);
-    const tx = exchange.addLiquidity(amountA, { value: amountB });
+  it("add liquidity, four times 100 ethers and 200 FTH", async function () {
+    const amountA = ethers.utils.parseEther("200");
+    const amountB = ethers.utils.parseEther("100");
+
+    for(let i = 1; i < 4; i++) {
+      await token.approve(exchange.address, amountA);
+      let tx = exchange.addLiquidity(amountA, { value: amountB });
+      
+      // el orden del testeo es importante, al cambiarlo falla waffle :S
+      // await expect(() => tx)
+      //   .to.changeTokenBalances(token, [deployer, exchange], [amountA.mul("-1"), amountA]);
     
-    // el orden del testeo es importante, al cambiarlo falla waffle :S
-    await expect(() => tx)
-      .to.changeTokenBalances(token, [deployer, exchange], [amountA.mul("-1"), amountA]);
-
-    await expect(await tx)
-      .to.changeEtherBalances([deployer, exchange], [amountB.mul("-1"), amountB])
-      .to.emit(exchange, "AddLiquidity").withArgs(deployer.address, amountB, amountA);
-
-    expect(await exchange.getReserve()).to.equal(amountA);
+      await expect(await tx)
+        .to.changeEtherBalances([deployer, exchange], [amountB.mul("-1"), amountB])
+        .to.emit(token, "Transfer").withArgs(deployer.address, exchange.address, amountA)
+        .to.emit(exchange, "AddLiquidity").withArgs(deployer.address, amountB, amountA);
+      
+      expect(await exchange.provider.getBalance(exchange.address)).to.equal(amountB.mul(i));
+      expect(await exchange.getReserve()).to.equal(amountA.mul(i));
+      expect(await exchange.balanceOf(deployer.address)).to.equal(amountB.mul(i));
+    }
   });
 
+  it("add liquidity, four times 0.01 ethers and 10 FTH", async function () {
+    const amountA = ethers.utils.parseEther("0.01");
+    const amountB = ethers.utils.parseEther("10");
 
-  /**
-   * Agrego las mismas proporciones de FTH y ETH que en el caso anterior
-   * Por lo que las cantidades deberian ser el doble y con la misma proporcion
-   */
-  it("add more liquidity", async function () {
-    await token.approve(exchange.address, amountA);
-    const tx = exchange.addLiquidity(amountA, { value: amountB });
-    /*
-    // el orden del testeo es importante, al cambiarlo falla waffle :S
-    en vez de esto uso el evento transfer del token, como es mio puedo confiar en el token
-    y en que si emite el evento transfer, es porque se modificaron los balances
-    await expect(tx)
-      .to.changeTokenBalances(token, [deployer, exchange], [amountA.mul("-1"), amountA]);
-    */
-    await expect(await tx)
-      .to.changeEtherBalances([deployer, exchange], [amountB.mul("-1"), amountB])
-      .to.emit(exchange, "AddLiquidity").withArgs(deployer.address, amountB, amountA)
-      .to.emit(token, "Transfer").withArgs(deployer.address, exchange.address, amountA);
+    for(let i = 1; i < 4; i++) {
+      await token.approve(exchange.address, amountA);
+      let tx = exchange.addLiquidity(amountA, { value: amountB });
       
+      // el orden del testeo es importante, al cambiarlo falla waffle :S
+      // await expect(() => tx)
+      //   .to.changeTokenBalances(token, [deployer, exchange], [amountA.mul("-1"), amountA]);
+    
+      await expect(await tx)
+        .to.changeEtherBalances([deployer, exchange], [amountB.mul("-1"), amountB])
+        .to.emit(token, "Transfer").withArgs(deployer.address, exchange.address, amountA)
+        .to.emit(exchange, "AddLiquidity").withArgs(deployer.address, amountB, amountA);
       
-    expect(await provider.getBalance(exchange.address)).to.equal(amountB.mul("2"));
-    expect(await exchange.getReserve()).to.equal(amountA.mul("2"));
-    expect(await exchange.balanceOf(deployer.address)).to.equal(amountB.mul("2"));
+      expect(await exchange.provider.getBalance(exchange.address)).to.equal(amountB.mul(i));
+      expect(await exchange.getReserve()).to.equal(amountA.mul(i));
+      expect(await exchange.balanceOf(deployer.address)).to.equal(amountB.mul(i));
+    }
+  });
+
+  it("cant fuck liquidity seding raw eth", async function () {
+    const tx = deployer.sendTransaction({
+      to: exchange.address,
+      value: ethers.utils.parseEther("0.01"),
+    });
+    
+    await expect(tx).to.reverted;
+    
   });
 });
