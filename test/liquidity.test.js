@@ -72,13 +72,50 @@ describe("Liquidity", function () {
     }
   });
 
-  it("cant fuck liquidity seding raw eth", async function () {
+  it("cant fuck liquidity seding raw ETH", async function () {
     const tx = deployer.sendTransaction({
       to: exchange.address,
       value: ethers.utils.parseEther("0.01"),
     });
     
     await expect(tx).to.reverted;
+  });
+
+  it("cant fuck liquidity seding raw FTH", async function () {
+    const amountA = ethers.utils.parseEther("0.01");
+    const amountB = ethers.utils.parseEther("10");
+    await token.approve(exchange.address, amountA.mul("10"));
+    let tx = exchange.addLiquidity(amountA, { value: amountB });
+    
+    // el orden del testeo es importante, al cambiarlo falla waffle :S
+    // await expect(() => tx)
+    //   .to.changeTokenBalances(token, [deployer, exchange], [amountA.mul("-1"), amountA]);
+  
+    await expect(await tx)
+      .to.changeEtherBalances([deployer, exchange], [amountB.mul("-1"), amountB])
+      .to.emit(token, "Transfer").withArgs(deployer.address, exchange.address, amountA)
+      .to.emit(exchange, "AddLiquidity").withArgs(deployer.address, amountB, amountA);
+    
+      
+    let ethReserve = await exchange.provider.getBalance(exchange.address);
+    let tokenReserve = await exchange.getReserve();
+    let tokenAmount = amountA.mul(tokenReserve).div(ethReserve);
+    
+    console.log("Ratio antes de enviar FTH", ethers.utils.formatEther(tokenAmount));
+    await token.transfer(exchange.address, amountB);
+          
+    ethReserve = await exchange.provider.getBalance(exchange.address);
+    tokenReserve = await exchange.getReserve();
+    tokenAmount = amountA.mul(tokenReserve).div(ethReserve);
+
+    console.log("Ratio despues de enviar FTH", ethers.utils.formatEther(tokenAmount));
+
+    // agrego liquidez usando exactamente la misma cantidad que tiene el LP en ETH y FTH
+    await expect(await tx)
+      .to.changeEtherBalances([deployer, exchange], [ethReserve.mul("-1"), ethReserve])
+      .to.emit(token, "Transfer").withArgs(deployer.address, exchange.address, tokenReserve)
+      .to.emit(exchange, "AddLiquidity").withArgs(deployer.address, ethReserve, tokenReserve);
+    
     
   });
 });
