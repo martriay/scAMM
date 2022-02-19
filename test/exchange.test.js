@@ -1,14 +1,11 @@
 const { expect } = require("chai");
-const { ethers, waffle } = require("hardhat");
-
-const { provider } = waffle;
+const { ethers } = require("hardhat");
+ 
 const totalSupply = ethers.utils.parseEther("10000");
 const amountA = ethers.utils.parseEther("2000");
 const amountB = ethers.utils.parseEther("1000");
 let token;
 let exchange;
-
-let tx;
 
 let deployer, bob, alice;
 
@@ -25,11 +22,16 @@ describe("Exchange", function () {
 
   it("add liquidity", async function () {
     await token.approve(exchange.address, amountA);
-    tx = exchange.addLiquidity(amountA, { value: amountB });
-    await expect(tx).to.emit(exchange, "AddLiquidity")
-      .withArgs(deployer.address, amountB, amountA);
+    const tx = exchange.addLiquidity(amountA, { value: amountB });
+    
+    // el orden del testeo es importante, al cambiarlo falla waffle :S
+    await expect(() => tx)
+      .to.changeTokenBalances(token, [deployer, exchange], [amountA.mul("-1"), amountA]);
 
-    expect(await provider.getBalance(exchange.address)).to.equal(amountB);
+    await expect(await tx)
+      .to.changeEtherBalances([deployer, exchange], [amountB.mul("-1"), amountB])
+      .to.emit(exchange, "AddLiquidity").withArgs(deployer.address, amountB, amountA);
+
     expect(await exchange.getReserve()).to.equal(amountA);
   });
 
@@ -50,18 +52,26 @@ describe("Exchange", function () {
   it("should remove liquidity", async () => {
     token.transfer(bob.address, totalSupply);
     token.connect(bob).approve(exchange.address, totalSupply);
-    tx = exchange.connect(bob).addLiquidity(amountA, { value: amountB });
-    await expect(tx).to.emit(exchange, "AddLiquidity")
-      .withArgs(bob.address, amountB, amountA);
-    
-    expect(await provider.getBalance(exchange.address)).to.equal(amountB);
-    expect(await exchange.getReserve()).to.equal(amountA);
+    let tx = exchange.connect(bob).addLiquidity(amountA, { value: amountB });
+
+    // el orden del testeo es importante, al cambiarlo falla waffle :S
+    await expect(() => tx)
+      .to.changeTokenBalances(token, [bob, exchange], [amountA.mul("-1"), amountA]);
+
+    await expect(await tx)
+      .to.changeEtherBalances([bob, exchange], [amountB.mul("-1"), amountB])
+      .to.emit(exchange, "AddLiquidity").withArgs(bob.address, amountB, amountA);
 
     const lpTokenAmount = await exchange.balanceOf(bob.address);
-
+  
     tx = exchange.connect(bob).removeLiquidity(lpTokenAmount);
-    await expect(tx).to.emit(exchange, "RemoveLiquidity")
-      .withArgs(bob.address, amountB, amountA);
+    
+    await expect(() => tx)
+      .to.changeTokenBalances(token, [exchange, bob], [amountA.mul("-1"), amountA]);
+
+    await expect(await tx)
+      .to.changeEtherBalances([exchange, bob], [amountB.mul("-1"), amountB])
+      .to.emit(exchange, "RemoveLiquidity").withArgs(bob.address, amountB, amountA);
   });
 
   it("returns correct eth price", async () => {

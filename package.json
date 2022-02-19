@@ -4,7 +4,7 @@
   "description": "",
   "main": ".eslintrc.js",
   "scripts": {
-    "test": "hardhat test test/exchange-test.js"
+    "test": "hardhat test"
   },
   "repository": {
     "type": "git",
