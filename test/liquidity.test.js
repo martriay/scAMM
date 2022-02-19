@@ -4,13 +4,13 @@ const { ethers } = require("hardhat");
 let token;
 let exchange;
 
-let deployer, bob;
+let deployer;
 
 describe("Liquidity", function () {
   beforeEach(async function () {
     const totalSupply = ethers.utils.parseEther("10000");
 
-    [deployer, bob] = await ethers.getSigners();
+    [deployer] = await ethers.getSigners();
     const Token = await ethers.getContractFactory("Token");
     token = await Token.deploy("Ferneth", "FTH", totalSupply);
     await token.deployed();
