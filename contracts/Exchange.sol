@@ -43,10 +43,10 @@ contract Exchange is ERC20 {
         }
 
         IERC20 token = IERC20(tokenAddress);
-        token.transferFrom(msg.sender, address(this), _tokenAmount);
+        token.transferFrom(msg.sender, address(this), tokenAmount);
         _mint(msg.sender, liquidity);
 
-        emit AddLiquidity(msg.sender, msg.value, _tokenAmount);
+        emit AddLiquidity(msg.sender, msg.value, tokenAmount);
 
         return liquidity;
     }
