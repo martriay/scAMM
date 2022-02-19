@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { ethers, waffle } = require("hardhat");
+const { ethers } = require("hardhat");
 
 let token;
 let exchange;
